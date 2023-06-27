@@ -1,0 +1,74 @@
+{% extends 'amscapp/base.html' %}
+{% load static %}
+{% block body %}
+
+{% if request.user.is_authenticated %}
+
+<div class="container">
+    <div>
+        <table class="table">
+            <tr>
+                <th>Пациент</th>
+                <th>Дата рождения</th>
+                <th>Дата регистрации</th>
+            </tr>
+            <tr>
+                <td>{{ patient }}</td>
+                <td> {{ patient.date_of_birth }} <br> Возраст: {{ patient.calculate_age }} </br></td>
+                <td>{{ patient.date_registration }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="row">
+        <button class="btn btn-default" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample"
+                aria-expanded="false" aria-controls="collapseExample">
+            Полная информация о пациенте
+        </button>
+        <div class="collapse" id="collapseExample">
+            <div class="card card-body">
+                <div>
+                    <h1>{{ patient.name }}</h1>
+                    <p>Возраст: {{ patient.calculate_age }}</p>
+                    <p>Группа: {{ patient.group }}</p>
+                    <p>Ведущая рука: {{ patient.get_hand_display }}</p>
+                    <p>Жалобы: {{ patient.plaint }}</p>
+                    <p>Цель обращения: {{ patient.goal }}</p>
+                    <p>Диагноз: {{ patient.diagnosis }}</p>
+                    <p>Анамнестические данные: {{ patient.anamnes }}</p>
+                    <p>Данные наблюдения за пациентом в ходе обследования: {{ patient.exam_data }}</p>
+
+                </div>
+            </div>
+        </div>
+        <a class="btn btn-warn" href="{% url 'edit_patient' pk=patient.pk %}">Редактировать информацию</a>
+        <a class="btn btn-default" href="{% url 'probs_list' pk=patient.pk %}">Добавить пробу</a>
+    </div>
+    <h1>{{ results.total_questions }}</h1>
+    {% for modality, html_table in html_tables.items %}
+    <div class="row">
+        <h2>Параметры оценки функции: {{ modality.name }}</h2>
+        {{ html_table|safe }}
+    </div>
+    <div>
+        <a class="btn btn-primary btn-block" href="{% url 'probs_results' pk=patient.pk modal=modality.pk %}">Результаты проб</a>
+    </div>
+    {% endfor %}
+
+    <style>
+        .resizable-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+            height: auto;
+        }
+    </style>
+    <div>
+        <img src="{% static 'image/graph.png' %}?timestamp={{ timestamp }}" alt="График" class="resizable-image">
+        <a class="btn btn-primary btn-block" href="?update-chart">Обновить график</a>
+        <a class="btn btn-default" href="?clear-chart">Очистить график</a>
+    </div>
+</div>
+<div class="mt-5"></div>
+{% endif %}
+{% endblock %}

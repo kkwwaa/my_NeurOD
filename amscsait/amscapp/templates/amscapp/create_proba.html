@@ -1,0 +1,38 @@
+{% extends 'amscapp/base.html' %}
+{% load static %}
+
+{% block body %}
+<title>Создание пробы</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#add-question-btn').click(function() {
+            var formsetContainer = $('#formset-container');
+            var newForm = formsetContainer.find('.question-form:first').clone();
+            newForm.find('input').val('');
+            formsetContainer.append(newForm);
+        });
+
+        $('#save-forms-btn').click(function() {
+            $('form').submit();
+        });
+    });
+</script>
+
+<div class="container">
+    <h1>Создание пробы</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button id="add-question-btn" type="button">Добавить вопрос</button>
+        <div id="formset-container">
+            {% for form in formset %}
+                <div class="question-form">
+                    {{ form.as_p }}
+                </div>
+            {% endfor %}
+        </div>
+        <button id="save-forms-btn" type="submit">Сохранить</button>
+    </form>
+</div>
+{% endblock %}

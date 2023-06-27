@@ -1,0 +1,48 @@
+{% extends 'amscapp/base.html' %}
+
+{% block body %}
+{% if request.user.is_authenticated %}
+<style>
+    .question {
+        display: block;
+    }
+
+    .option {
+        display: block;
+        margin-left: 10px;
+    }
+</style>
+    <h1 class="text-center">Вопросы для пробы "{{ prob.title }}"</h1>
+    <div class="mt-5"></div>
+    <div class="container" class="mt-6">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    {% for question in questions %}
+                        <div class="mb-4">
+                            <h3>{{ question.question_text }}</h3>
+                            {% for option in question.options.all %}
+                                <label class="option">
+                                    <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" required>
+                                    {{ option.name }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    {% for numeric_question in numeric_questions %}
+                        <div class="mb-4">
+                            <h3>{{ numeric_question.question_text }}</h3>
+                            {% for option in numeric_question.options.all %}
+                                {{ option.name }}: <input type="number" name="numeric_question_{{ numeric_question.id }}_{{ option.id }}" step="any" required><br>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary">Отправить ответы</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

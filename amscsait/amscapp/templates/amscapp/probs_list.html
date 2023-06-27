@@ -1,0 +1,60 @@
+{% extends 'amscapp/base.html' %}
+
+{% block body %}
+{% if request.user.is_authenticated %}
+<title>Пробы</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Показать все пробы при нажатии на "Все пробы"
+        $('a[href="#"]').click(function(e) {
+            e.preventDefault();
+            $('a[id^="proba-link-"]').show();
+        });
+
+        // Показать связанные пробы при нажатии на модальность
+        $('a[id^="modality-link-"]').click(function(e) {
+            e.preventDefault();
+            var modalityId = $(this).attr('id').split('-')[2];
+            $('a[id^="proba-link-"]').hide();
+            $('a[id^="proba-link-"][data-modal="' + modalityId + '"]').show();
+        });
+    });
+</script>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="mt-5"></div>
+
+            <!-- Модальности -->
+            <div class="modalities-container">
+                <ul class="modalities-list">
+                    <a href="#" class="btn btn-default">Все пробы</a>
+                    {% for modality in modalities %}
+                        <a id="modality-link-{{ modality.id }}" href="#" class="btn btn-default">{{ modality.name }}</a>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Список проб -->
+            <div class="mt-5">
+                <div class="list-group">
+                    {% for modality in modalities %}
+                        {% for proba in probs %}
+                            {% if proba.block_id == modality.id %}
+                                <a id="proba-link-{{ proba.id }}" class="list-group-item list-group-item-action" href="{% url 'proba' pk=pk proba_pk=proba.pk %}" data-modal="{{ proba.block_id }}">{{ proba.title }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+        <div style="margin-left: 200px;">
+            <div class="mt-5"></div>
+            <a class="btn btn-primary btn-block" href="{% url 'view_patient' pk=pk %}">Вернуться к пациенту</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'amscapp/base.html' %}
+
+{% block title %}Анкетирование{% endblock %}
+
+{% block body %}
+<div class="container">
+  <div class="add">
+    <h1>{{ title }}</h1>
+
+    <div class="tabs">
+      <input type="radio" name="inset" value="" id="tab_1" checked>
+      <label for="tab_1">Жалобы</label>
+
+      <input type="radio" name="inset" value="" id="tab_2">
+      <label for="tab_2">У родственников</label>
+
+      <input type="radio" name="inset" value="" id="tab_3">
+      <label for="tab_3">Перенесенные заболевания/Сопутствующие заболевания/Соматические заболевания</label>
+
+      <input type="radio" name="inset" value="" id="tab_4">
+      <label for="tab_4">Патология развития соединительной ткани</label>
+
+      <input type="radio" name="inset" value="" id="tab_5">
+      <label for="tab_5">Основная форма</label>
+
+      <input type="radio" name="inset" value="" id="tab_6">
+      <label for="tab_6">Аллергологический анамнез/Гинекологический анамнез</label>
+
+      <input type="radio" name="inset" value="" id="tab_7">
+      <label for="tab_7">Клинический анализ крови</label>
+
+      <input type="radio" name="inset" value="" id="tab_8">
+      <label for="tab_8">Коагулограмма</label>
+
+      <input type="radio" name="inset" value="" id="tab_9">
+      <label for="tab_9">Биохимия крови</label>
+
+      <input type="radio" name="inset" value="" id="tab_10">
+      <label for="tab_10">Исследование полиморфных вариантов генов системы гемостаза</label>
+
+      <input type="radio" name="inset" value="" id="tab_11">
+      <label for="tab_11">Полиморфные варианты генов фолатного метаболизма</label>
+
+      <div id="txt_1">
+        <form method="post">
+          {{ form.as_p|slice:":10" }}
+        </form>
+      </div>
+
+      <div id="txt_2">
+        <form method="post">
+            {{ form|slice:":10" }}
+        </form>
+      </div>
+
+      <div id="txt_3">
+        <form method="post">
+          {{ form.as_table|slice:":10" }}
+        </form>
+      </div>
+
+      <div id="txt_4">
+          <div class="add">
+              <form method="post">
+                {% for item in questions|slice:"1:5" %}
+                  {{ item }}
+                {% endfor %}
+                  <input class="btn btn-primary btn-block" type="submit" value="{{ submit_text|default:'submit' }}">
+              </form>
+          </div>
+      </div>
+  </div>
+
+  <style type="text/css">
+  .tabs { width: 100%; padding: 0px; margin: 0 auto; }
+  .tabs>input { display: none; }
+  .tabs>div {
+      display: none;
+      padding: 12px;
+      border: 1px solid #C0C0C0;
+      background: #FFFFFF;
+  }
+  .tabs>label {
+      display: inline-block;
+      padding: 7px;
+      margin: 0 -5px -1px 0;
+      text-align: center;
+      color: #000000;
+      border: 1px solid #000000;
+      background: #FFFFFF;
+      cursor: pointer;
+  }
+  .tabs>input:checked + label {
+      color: #000000;
+      border: 1px solid #C0C0C0;
+      border-bottom: 1px solid #FFFFFF;
+      background: #00BCAF;
+  }
+  #tab_1:checked ~ #txt_1,
+  #tab_2:checked ~ #txt_2,
+  #tab_3:checked ~ #txt_3,
+  #tab_4:checked ~ #txt_4 { display: block; }
+  </style>
+  </div>
+</div>
+{% endblock %}
