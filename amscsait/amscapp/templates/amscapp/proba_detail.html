@@ -13,7 +13,13 @@
     }
 </style>
     <h1 class="text-center">Вопросы для пробы "{{ prob.title }}"</h1>
-    <div class="mt-5"></div>
+    <div class="mt-5">
+       <div class="text-center" >
+        {% if proba_image %}
+            {{ proba_image.image_tag }}
+        {% endif %}
+    </div>
+    </div>
     <div class="container" class="mt-6">
         <div class="row justify-content-center">
             <div class="col-md-8">

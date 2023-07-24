@@ -36,8 +36,26 @@
                 </ul>
             </div>
 
+            <form method="get">
+                <div class="mt-3"></div>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Поиск по пробам" name="search">
+                    <button class="btn btn-outline-secondary" type="submit">Поиск</button>
+                </div>
+            </form>
+
+            <div class="mt-3">
+                <div class="input-group">
+                    <select class="form-select" id="sort" name="sort">
+                        <option value="title" {% if sort == 'title' %}selected{% endif %}>Сортировать по названию</option>
+                        <option value="numer" {% if sort == 'numer' %}selected{% endif %}>Сортировать по протоколу</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary">Применить</button>
+                </div>
+            </div>
+
             <!-- Список проб -->
-            <div class="mt-5">
+            <div class="mt-3">
                 <div class="list-group">
                     {% for modality in modalities %}
                         {% for proba in probs %}

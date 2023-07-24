@@ -3,12 +3,12 @@
 {% block title %}Главная{% endblock %}
 {% block body %}
   <div class="container">
-    <div class="search">
-    <form class="form-inline my-2 my-lg-0" action="{% url 'index' %}" method="get">
-      <input class="mr-sm-2" type="search" placeholder="Поиск" aria-label="Search" name="q">
-      <button class="fa fa-search" data-bs-toggle="collapse" type="submit">   Поиск</button>
-    </form>
+  <form class="form-inline my-2 my-lg-0" action="{% url 'index' %}" method="get">
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="Поиск" name="q">
+      <button class="btn btn-outline-secondary" type="submit">   Поиск</button>
     </div>
+  </form>
     <div class="row">
       <div class="col-md-12">
       <br>

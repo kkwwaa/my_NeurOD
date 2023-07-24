@@ -5,6 +5,7 @@
 {% if request.user.is_authenticated %}
 
 <div class="container">
+
     <div>
         <table class="table">
             <tr>
@@ -42,16 +43,13 @@
             </div>
         </div>
         <a class="btn btn-warn" href="{% url 'edit_patient' pk=patient.pk %}">Редактировать информацию</a>
-        <a class="btn btn-default" href="{% url 'probs_list' pk=patient.pk %}">Добавить пробу</a>
+        <a class="btn btn-primary btn-block" href="{% url 'probs_list' pk=pk %}">Добавить пробу</a>
     </div>
     <h1>{{ results.total_questions }}</h1>
     {% for modality, html_table in html_tables.items %}
     <div class="row">
         <h2>Параметры оценки функции: {{ modality.name }}</h2>
         {{ html_table|safe }}
-    </div>
-    <div>
-        <a class="btn btn-primary btn-block" href="{% url 'probs_results' pk=patient.pk modal=modality.pk %}">Результаты проб</a>
     </div>
     {% endfor %}
 

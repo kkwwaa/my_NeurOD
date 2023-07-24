@@ -3,46 +3,51 @@
 {% if request.user.is_authenticated %}
 <div class="container">
     <div class="row">
-            {% for result in results %}
-            <h2>Результаты по пробе: {{ result.proba.title }}</h2>
-            <table class="table">
-                <tr>
-                    <th>Вопрос</th>
-                    <th>Ответ</th>
-                    <th>Кол-во баллов</th>
-                </tr>
-                {% for answer in result.answers %}
-                <tr>
-                    <td>{{ answer.question }}</td>
-                    <td>{{ answer.option }}</td>
-                    <td>{{ answer.option.score }}</td>
-                </tr>
-                {% endfor %}
-
-                {% for numeric_answer in result.numeric_answers %}
-                <tr>
-                    <td>{{ numeric_answer.question }}</td>
-                    <td>{{ numeric_answer.answer }}</td>
-                    <td>{{ numeric_answer.answer }}</td>
-                </tr>
-                {% endfor %}
-
-                <tr>
-                    <th></th>
-                    <th>Итого:</th>
-                    <th>{{ result.total_score }}</th>
-                </tr>
-            </table>
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="prob_to_delete" value="{{ result.proba.id }}">
-                     <input type="hidden" name="num" value="{{ result.num }}">
-                <button class="btn btn-danger" type="submit">Удалить результаты пробы</button>
-            </form>
+        {% for result in results %}
+        <h2>Результаты по пробе: {{ result.proba.title }}</h2>
+        <table class="table">
+            <tr>
+                <th>Вопрос</th>
+                <th>Ответ</th>
+                <th>Кол-во баллов</th>
+            </tr>
+            {% for answer in result.answers %}
+            <tr>
+                <td>{{ answer.question }}</td>
+                <td>{{ answer.option }}</td>
+                <td>{{ answer.option.score }}</td>
+            </tr>
             {% endfor %}
+
+            {% for numeric_answer in result.numeric_answers %}
+            <tr>
+                <td>{{ numeric_answer.question }}</td>
+                <td>{{ numeric_answer.answer }}</td>
+                <td>{{ numeric_answer.answer }}</td>
+            </tr>
+            {% endfor %}
+
+            <tr>
+                <th></th>
+                <th>Итого:</th>
+                <th>{{ result.total_score }}</th>
+            </tr>
+        </table>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="prob_to_delete" value="{{ result.proba.id }}">
+            <input type="hidden" name="num" value="{{ result.num }}">
+            <div class="d-flex">
+                <button class="btn btn-danger" type="submit">Удалить результаты пробы</button>
+                <div style="margin-left: 20px;">
+                    <a class="btn btn-primary btn-block" href="{% url 'view_patient' pk=pk %}">Вернуться к пациенту</a>
+                </div>
+            </div>
+
+        </form>
+        {% endfor %}
         <div class="mt-5"></div>
     </div>
 </div>
 {% endif %}
 {% endblock %}
-

@@ -76,14 +76,15 @@ WSGI_APPLICATION = "amscsait.wsgi.application"
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'NeurOD',
         'USER': 'postgres',
         'PASSWORD': '0690',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'HOST': 'localhost',  # или адрес вашей базы данных
+        'PORT': '5432',  # порт, если используется нестандартный порт (обычно 5432)
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -124,6 +125,10 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     STATIC_DIR,
 ]
+
+MEDIA_ROOT = Path(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

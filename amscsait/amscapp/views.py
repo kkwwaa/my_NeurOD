@@ -7,7 +7,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from .forms import (PatientForm, UserLoginForm,
                     UserRegisterForm, OptionForm)
-from .models import Patient, PatientAnswer, Block, Probs, Modality, Question, PatientNumericAnswer, NumericQuestion
+from .models import Patient, PatientAnswer, Block, Probs, Modality, Question, PatientNumericAnswer, NumericQuestion, ProbsImage
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
@@ -50,16 +50,24 @@ def create_patient(request):
     )
 
 
-def get_severity(score, mean, std_dev):
+def get_severity(score, mean, std_dev, rev=False):
     lower_bound = abs(mean - std_dev)
     upper_bound = mean + std_dev
 
-    if score <= lower_bound:
-        return "Выше среднего"
-    elif score > math.ceil(upper_bound):
-        return "Ниже среднего"
+    if rev:
+        if score >= lower_bound:
+            return "Выше среднего"
+        elif score < math.ceil(upper_bound):
+            return "Ниже среднего"
+        else:
+            return "Средне"
     else:
-        return "Средне"
+        if score <= lower_bound:
+            return "Выше среднего"
+        elif score > math.ceil(upper_bound):
+            return "Ниже среднего"
+        else:
+            return "Средне"
 
 
 def score_severity(severity_num):
@@ -78,17 +86,19 @@ def generate_dataframe(results):
             if hasattr(answer, 'option'):
                 row = {
                     'Проба': answer.proba,
+                    'Результаты пробы': '<a href="/patient/{}/probs_results/{}">Просмотреть результаты</a>'.format(answer.patient.pk, answer.proba.slug),
                     'Вопрос': answer.question,
                     'Ответ': answer.option,
-                    'Кол-во баллов': answer.option.score,
+                    'Кол-во баллов': answer.num,
                     'Оценка тяжести': severity[0],
                 }
             else:
                 row = {
                     'Проба': answer.proba,
+                    'Результаты пробы': '<a href="/patient/{}/probs_results/{}">Просмотреть результаты</a>'.format(answer.patient.pk, answer.proba.slug),
                     'Вопрос': answer.question,
                     'Ответ': answer.answer,
-                    'Кол-во баллов': answer.answer,
+                    'Кол-во баллов': answer.num,
                     'Оценка тяжести': severity[0],
                 }
             data.append(row)
@@ -102,6 +112,7 @@ def generate_dataframe(results):
         data.append(row)
 
     df = pd.DataFrame(data)
+    df.fillna('', inplace=True)
     df.loc[df['Проба'].duplicated(), 'Проба'] = ''
     return df
 
@@ -147,6 +158,12 @@ def view_patient(request, pk):
 
         severity_num = []
         for answer in modality_numeric_answers:
+            proba = answer.proba
+            num = answer.num
+            if proba not in max_num_dict or num > max_num_dict[proba]:
+                max_num_dict[proba] = num
+
+        for answer in modality_numeric_answers:
             if answer.proba in max_num_dict and answer.num == max_num_dict[answer.proba]:
                 total_score += answer.answer
                 question = answer.question
@@ -154,20 +171,20 @@ def view_patient(request, pk):
 
                 if avg_value is not None:
                     std_dev = abs(question.max_value - question.min_value) / 4
-                    severity_num.append((get_severity(answer.answer, avg_value, std_dev), answer.created_at))
+                    severity_num.append((get_severity(answer.answer, avg_value, std_dev, question.rev), answer.created_at))
 
                 score_sum += score_severity(severity_num[-1][0])
                 answers.append(answer)
 
-        if (questions.filter(modality=modality).count() + num_questions.filter(modality=modality).count()) != 0:
-            score_sum = (score_sum / (questions.filter(modality=modality).count() + num_questions.filter(
-                modality=modality).count())) * 100
-
         answers = sorted(answers, key=lambda x: x.created_at)
         severity = sorted(severity + severity_num, key=lambda x: x[1])
 
+        if len(severity) != 0:
+            score_sum = (score_sum / len(severity)) * 100
+
         result = {
             "modality": modality,
+            'pk': pk,
             "answers": answers,
             "total_score": total_score,
             "severity_list": [(answer, severity) for answer, severity in zip(answers, severity)],
@@ -180,7 +197,7 @@ def view_patient(request, pk):
         df = generate_dataframe([result])
 
         # Преобразование DataFrame в HTML
-        html_table = df.to_html(index=False, classes="table")
+        html_table = df.to_html(index=False, classes="table", escape=False)
 
         # Добавление таблицы в словарь по ключу модальности
         html_tables[modality] = html_table
@@ -226,9 +243,9 @@ def view_patient(request, pk):
 
 
 @login_required
-def probs_results(request, pk, modal):
+def probs_results(request, pk, slug):
     patient = get_object_or_404(Patient, pk=pk)
-    probs = patient.patientanswer_set.filter(modal_id=modal).values_list('proba', flat=True).distinct()
+    proba = Probs.objects.filter(slug=slug).first()
     results = []
 
     if request.method == 'POST':
@@ -238,31 +255,34 @@ def probs_results(request, pk, modal):
             PatientAnswer.objects.filter(patient_id=pk, proba=prob_to_delete, num=num).delete()
             PatientNumericAnswer.objects.filter(patient_id=pk, proba=prob_to_delete, num=num).delete()
 
-    for proba in probs:
-        nums = patient.patientanswer_set.filter(proba=proba).values_list('num', flat=True).distinct()
-        for num in nums:
-            proba_answers = patient.patientanswer_set.filter(proba=proba, num=num)
-            total_score = proba_answers.aggregate(total_score=Sum("option__score"))["total_score"]
-            total_score = total_score if total_score is not None else 0
-            numeric_answers = patient.patientnumericanswer_set.filter(proba=proba, num=num)
-            numeric_total_score = numeric_answers.aggregate(total_score=Sum("answer"))["total_score"]
-            numeric_total_score = numeric_total_score if numeric_total_score is not None else 0
-            proba1 = Probs.objects.get(pk=proba)
+    num1 = patient.patientanswer_set.filter(proba=proba.pk).values_list('num', flat=True).distinct()
+    if num1:
+        nums=num1
+    else:
+        nums = patient.patientnumericanswer_set.filter(proba=proba.pk).values_list('num', flat=True).distinct()
+    for num in nums:
+        proba_answers = patient.patientanswer_set.filter(proba=proba, num=num)
+        total_score = proba_answers.aggregate(total_score=Sum("option__score"))["total_score"]
+        total_score = total_score if total_score is not None else 0
+        numeric_answers = patient.patientnumericanswer_set.filter(proba=proba, num=num)
+        numeric_total_score = numeric_answers.aggregate(total_score=Sum("answer"))["total_score"]
+        numeric_total_score = numeric_total_score if numeric_total_score is not None else 0
+        proba1 = Probs.objects.get(pk=proba.pk)
 
-            result = {
-                "num": num,
-                "proba": proba1,
-                'proba_pk': proba,
-                "answers": proba_answers,
-                "numeric_answers": numeric_answers,
-                "total_score": total_score + numeric_total_score,
-            }
-            results.append(result)
+        result = {
+            "num": num,
+            "proba": proba1,
+            'proba_pk': proba,
+            "answers": proba_answers,
+            "numeric_answers": numeric_answers,
+            "total_score": total_score + numeric_total_score,
+        }
+        results.append(result)
 
     return render(
         request,
         "amscapp/probs_results.html",
-        {"results": results},
+        {"results": results, 'nums': nums, 'proba': proba, 'pk': pk},
     )
 
 
@@ -270,7 +290,23 @@ def probs_results(request, pk, modal):
 def probs_list(request, pk):
     modalities = Block.objects.all()
     probs = Probs.objects.all()
-    return render(request, 'amscapp/probs_list.html', {'modalities': modalities, 'probs': probs, 'pk': pk})
+
+    # Определите переменную для поискового запроса
+    search_query = request.GET.get('search', '')
+
+    # Фильтруйте и сортируйте пробы в зависимости от наличия поискового запроса и значения sort
+    sort = request.GET.get('sort', 'title')  # По умолчанию сортировка по полю title
+
+    if search_query:
+        probs = probs.filter(title__icontains=search_query)
+
+    if sort == 'numer':
+        probs = probs.order_by('numer')
+    else:
+        probs = probs.order_by('title')
+
+
+    return render(request, 'amscapp/probs_list.html', {'modalities': modalities, 'probs': probs, 'pk': pk, 'search_query': search_query})
 
 
 @login_required
@@ -288,53 +324,54 @@ def proba(request, pk, proba_pk):
         num = (PatientAnswer.objects.filter(patient_id=pk, proba=proba).count()) // (
             Question.objects.filter(proba=proba).count())
     if NumericQuestion.objects.filter(proba=proba).count() != 0:
-        num1 = (PatientNumericAnswer.objects.filter(patient_id=pk, proba=proba).count()) // (
-            NumericQuestion.objects.filter(proba=proba).count())
+        num1 = int((PatientNumericAnswer.objects.filter(patient_id=pk, proba=proba).count()) // (
+            NumericQuestion.objects.filter(proba=proba).count()))
 
     if request.method == 'POST':
 
-        # Обработка отправленных ответов на вопросы
         for question in questions:
             answer_option_id = request.POST.get(f'question_{question.id}', None)
             if answer_option_id is not None:
-                # Получение модальности из связи вопрос-модальность
-                modal = question.modality
+                for modal in question.modality.all():
 
-                # Создание объекта PatientAnswer и сохранение в БД с указанием модальности или None
-                PatientAnswer.objects.create(
-                    patient_id=pk,
-                    question=question,
-                    option_id=answer_option_id,
-                    proba=proba,
-                    modal=modal,
-                    num=num,
-                )
+                    PatientAnswer.objects.create(
+                        patient_id=pk,
+                        question=question,
+                        option_id=answer_option_id,
+                        proba=proba,
+                        modal=modal,
+                        num=num,
+                    )
 
         for numeric_question in numeric_questions:
-            total_sum = 0  # Переменная для хранения суммы ответов на числовой вопрос
+            total_sum = 0
             for option in numeric_question.options.all():
                 numeric_answer_value = request.POST.get(f'numeric_question_{numeric_question.id}_{option.id}', None)
                 if numeric_answer_value is not None:
-                    # Получение модальности из связи вопрос-модальность
-                    modal = numeric_question.modality
-                    total_sum += int(numeric_answer_value) * option.coefficient
+                    for modal in numeric_question.modality.all():
+                        total_sum = int(numeric_answer_value) * option.coefficient
 
-                    # Создание объекта PatientNumericAnswer и сохранение в БД с указанием модальности или None
-            PatientNumericAnswer.objects.create(
-                patient_id=pk,
-                question=numeric_question,
-                answer=total_sum,
-                proba=proba,
-                modal=modal,
-                num=num1,
-            )
+                        PatientNumericAnswer.objects.create(
+                            patient_id=pk,
+                            question=numeric_question,
+                            answer=total_sum,
+                            proba=proba,
+                            modal=modal,  # Здесь modal - объект Modality
+                            num=num1,
+                        )
 
-        return redirect('probs_list', pk=pk)  # Перенаправление на страницу успешного сохранения ответов
+        return redirect('probs_list', pk=pk)
+
+    try:
+        proba_image = ProbsImage.objects.get(prob=proba)
+    except ProbsImage.DoesNotExist:
+        proba_image = None
 
     context = {
         'prob': proba,
-        'questions': questions,
-        'numeric_questions': numeric_questions,
+        'proba_image': proba_image,
+        'questions': sorted(questions, key=lambda q: (q.num if q.num is not None else float('inf'))),
+        'numeric_questions': sorted(numeric_questions, key=lambda q: (q.num if q.num is not None else float('inf'))),
     }
 
     return render(request, 'amscapp/proba_detail.html', context)
