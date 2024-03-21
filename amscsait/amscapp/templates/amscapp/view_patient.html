@@ -38,6 +38,49 @@
                     <p>Диагноз: {{ patient.diagnosis }}</p>
                     <p>Анамнестические данные: {{ patient.anamnes }}</p>
                     <p>Данные наблюдения за пациентом в ходе обследования: {{ patient.exam_data }}</p>
+                    <div class="collapse" id="collapseExample">
+                        <div class="card card-body">
+                            <div>
+                                <h1>Нейропсихологическое заключение</h1>
+                                <p  style="text-decoration: underline;">
+                                    <span style="margin-right: 50%;">ФИО: {{ patient.name }}</span>
+                                    <span>Дата обследования: - </span>
+                                </p>
+                                <p  style="text-decoration: underline;">
+                                    <span style="margin-right: 70%;">Возраст: {{ patient.calculate_age }}</span>
+                                    <span>Группа: {{ patient.group }} </span>
+                                </p>
+
+                                <p style="display: inline-block;">
+                                    <span style="display: inline-block;font-weight: bold;">Цель обращения:</span>
+                                    <span>{{ patient.goal }}</span>
+                                    <span>{{ patient.plaint }}</span>
+                                    <span>{{ patient.diagnosis }}</span>
+                                </p>
+                                <p style="display: inline-block;">
+                                    <span style="display: inline-block;font-weight: bold;">Анамнестические данные:</span>
+                                    <span>{{ patient.anamnes }}</span>
+                                </p>
+                                <p style="display: inline-block;">
+                                    <span style="display: inline-block;font-weight: bold;">Данные наблюдения за пациентом в ходе обследования:</span>
+                                    <span>{{ patient.exam_data }}</span>
+                                </p>
+
+                                <p style="text-align: center;">Нейропсихологический профиль</p>
+
+                                <img src="{{ chart_image_path }}?timestamp={{ timestamp }}" alt="График" class="centered-image">
+
+                                {% for part_zacl, modality in zacl %}
+                                    <p>
+                                        <span style="display: inline-block;font-weight: bold;">{{ modality }}</span>
+                                        <span>{{ part_zacl }}</span>
+                                    </p>
+                                {% endfor %}
+
+
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
             </div>
@@ -58,11 +101,20 @@
             max-width: 100%;
             max-height: 100%;
             width: 100%;
-            height: auto;
+            height: 40%;
         }
+
+
+        .centered-image {
+            display: block; /* Чтобы можно было использовать margin: auto; */
+            margin: auto; /* Центрирует изображение по горизонтали */
+            max-width: 100%;
+            max-height: 100%;
+        }
+
     </style>
     <div>
-        <img src="{% static 'image/graph.png' %}?timestamp={{ timestamp }}" alt="График" class="resizable-image">
+        <img src="{%static 'image/graph.png' %}?timestamp={{ timestamp }}" alt="График" class="resizable-image">
         <a class="btn btn-primary btn-block" href="?update-chart">Обновить график</a>
         <a class="btn btn-default" href="?clear-chart">Очистить график</a>
     </div>
