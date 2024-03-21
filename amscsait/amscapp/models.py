@@ -104,7 +104,7 @@ class Probs(models.Model):
     modal = models.ForeignKey(Modality, on_delete=models.CASCADE)
     block = models.ForeignKey(Block, on_delete=models.CASCADE, blank=True, null=True)
     slug = models.SlugField(unique=True, blank=True)
-    numer = models.IntegerField("Номер в протоколе",null=True)
+    #numer = models.IntegerField("Номер в протоколе",null=True)
 
     def get_results_url(self):
         return reverse('probs_results', kwargs={'pk': self.pk, 'slug': self.slug})
